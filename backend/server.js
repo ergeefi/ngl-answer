@@ -1,15 +1,15 @@
-import dotenv from "dotenv";
-dotenv.config();
-
 import express from "express";
 import cors from "cors";
 import multer from "multer";
+import cloudinary from "cloudinary";
 import { Low } from "lowdb";
 import { JSONFile } from "lowdb";
 import path from "path";
 import fs from "fs";
-import { fileURLToPath } from "url";
-import cloudinary from "cloudinary";
+import dotenv from "dotenv";
+
+// Load environment variables
+dotenv.config();
 
 // Setup Cloudinary
 cloudinary.config({
@@ -18,11 +18,6 @@ cloudinary.config({
   api_secret: process.env.CLOUD_API_SECRET,
 });
 
-// Setup __dirname karena kita pakai ES module
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-// Setup Express dan port
 const app = express();
 const port = process.env.PORT || 3000;
 
@@ -30,6 +25,10 @@ const port = process.env.PORT || 3000;
 const dbFile = path.join(__dirname, "db.json");
 const adapter = new JSONFile(dbFile);
 const db = new Low(adapter);
+
+// Setup Multer (memory storage for Cloudinary)
+const storage = multer.memoryStorage();
+const upload = multer({ storage: storage });
 
 // Baca dan inisialisasi database
 await db.read();
@@ -40,37 +39,43 @@ await db.write();
 app.use(cors());
 app.use(express.json());
 
-// Setup multer
-const storage = multer.memoryStorage(); // Menyimpan file di memory
-const upload = multer({ storage });
-
-// Routes
+// Route untuk mendapatkan data answers
 app.get("/answers", (req, res) => {
   res.json(db.data.answers);
 });
 
+// Route untuk upload gambar dan menyimpan jawaban
 app.post("/answers", upload.single("image"), async (req, res) => {
   const { answer } = req.body;
-
-  // Upload gambar ke Cloudinary
   let imageUrl = null;
+
+  // Cek jika ada file di request
   if (req.file) {
     try {
-      const uploadResponse = await cloudinary.uploader.upload_stream(
-        { resource_type: "auto" }, // auto untuk otomatis menentukan tipe file
-        (error, result) => {
-          if (error) {
-            return res.status(500).json({ error: "Image upload failed." });
+      // Upload file gambar ke Cloudinary
+      const uploadResponse = await new Promise((resolve, reject) => {
+        cloudinary.uploader.upload_stream(
+          { resource_type: "auto" }, // Menangani berbagai tipe file (image, video, dll)
+          (error, result) => {
+            if (error) {
+              console.error("Error uploading image to Cloudinary:", error);
+              reject("Gagal mengupload gambar!");
+            } else {
+              resolve(result.secure_url);
+            }
           }
-          imageUrl = result.secure_url;
-        }
-      );
-      uploadResponse.end(req.file.buffer);
+        ).end(req.file.buffer); // Mengirim file ke Cloudinary
+      });
+
+      // Dapatkan URL gambar dari Cloudinary
+      imageUrl = uploadResponse;
     } catch (error) {
-      return res.status(500).json({ error: "Cloudinary upload failed" });
+      console.error("Error in Cloudinary upload:", error);
+      return res.status(500).json({ message: "Terjadi kesalahan saat upload gambar." });
     }
   }
 
+  // Simpan data baru ke database
   const newEntry = {
     id: Date.now().toString(),
     image: imageUrl,
@@ -83,6 +88,7 @@ app.post("/answers", upload.single("image"), async (req, res) => {
   res.status(201).json(newEntry);
 });
 
+// Route untuk update jawaban
 app.put("/answers/:id", async (req, res) => {
   const { id } = req.params;
   const { answer } = req.body;
@@ -97,6 +103,7 @@ app.put("/answers/:id", async (req, res) => {
   }
 });
 
+// Route untuk delete jawaban
 app.delete("/answers/:id", async (req, res) => {
   const { id } = req.params;
   db.data.answers = db.data.answers.filter((a) => a.id !== id);
@@ -104,9 +111,10 @@ app.delete("/answers/:id", async (req, res) => {
   res.status(204).end();
 });
 
+// Route untuk testing jika server berjalan
 app.get("/", (req, res) => {
-  res.send("Hello there! Api is working")
-})
+  res.send("Hello there! API is working.");
+});
 
 // Start server
 app.listen(port, () => {
