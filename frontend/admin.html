@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Admin Panel</title>
+    <link rel="stylesheet" href="styles.css" />
+</head>
+
+<body>
+    <div class="container">
+        <h1>Ergeefi</h1>
+
+        <!-- Form Upload -->
+        <div class="form-card">
+            <h2>Tambah Pertanyaan & Jawaban</h2>
+            <form id="uploadForm" enctype="multipart/form-data">
+                <input type="file" name="image" accept="image/*" required />
+                <textarea name="answer" placeholder="Tulis jawaban di sini..." required></textarea>
+                <button type="submit">Upload</button>
+            </form>
+        </div>
+
+        <h1>Daftar Pertanyaan</h1>
+        <ul class="question-list" id="questionList">
+            <!-- Elemen akan diisi oleh JavaScript -->
+        </ul>
+    </div>
+
+    <footer class="site-footer">
+        <p>&copy; 2025 Made by Ergeefi.</p>
+    </footer>
+
+    <script>
+        // Proteksi password
+        const password = prompt("Masukkan password admin:");
+        if (password !== "admin123") {
+            alert("Password salah!");
+            document.body.innerHTML = "<h1 style='text-align:center;margin-top:50px;'>Akses Ditolak</h1>";
+            throw new Error("Akses Ditolak");
+        }
+
+        const API = "http://localhost:3000/answers";
+        const uploadForm = document.getElementById("uploadForm");
+        const questionList = document.getElementById("questionList");
+
+        async function loadData() {
+            try {
+                const res = await fetch(API);
+                const data = await res.json();
+                renderList(data);
+            } catch (err) {
+                console.error("Gagal memuat data:", err);
+            }
+        }
+
+        function renderList(data) {
+            questionList.innerHTML = "";
+            data.forEach((item) => {
+                const li = document.createElement("li");
+                li.className = "card";
+
+                li.innerHTML = `
+  <div class="img-container">
+    <img src="http://localhost:3000${item.image}" alt="Pertanyaan" />
+    <div class="overlay">
+      <button class="edit-btn">Edit</button>
+      <button class="delete-btn">Hapus</button>
+    </div>
+  </div>
+  <div class="answer">${item.answer}</div>
+`;
+
+
+                const editBtn = li.querySelector(".edit-btn");
+                editBtn.addEventListener("click", (e) => {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    editItem(item.id, item.answer);
+                });
+
+                const deleteBtn = li.querySelector(".delete-btn");
+                deleteBtn.addEventListener("click", (e) => {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    deleteItem(item.id);
+                });
+
+                questionList.appendChild(li);
+            });
+        }
+
+
+
+        uploadForm.addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const formData = new FormData(uploadForm);
+
+            try {
+                const res = await fetch(API, {
+                    method: "POST",
+                    body: formData,
+                });
+                if (res.ok) {
+                    uploadForm.reset();
+                    loadData();
+                } else {
+                    alert("Gagal mengupload data!");
+                }
+            } catch (err) {
+                alert("Terjadi kesalahan saat upload!");
+            }
+        });
+
+        async function editItem(id, oldAnswer) {
+            const newAnswer = prompt("Edit jawaban:", oldAnswer);
+            if (newAnswer && newAnswer !== oldAnswer) {
+                const res = await fetch(`${API}/${id}`, {
+                    method: "PUT",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                        answer: newAnswer
+                    }),
+                });
+
+                if (res.ok) {
+                    loadData();
+                } else {
+                    alert("Gagal mengedit!");
+                }
+            }
+        }
+
+        async function deleteItem(id) {
+            if (confirm("Yakin ingin menghapus item ini?")) {
+                const res = await fetch(`${API}/${id}`, {
+                    method: "DELETE",
+                });
+                if (res.ok) {
+                    loadData();
+                } else {
+                    alert("Gagal menghapus!");
+                }
+            }
+        }
+
+        loadData();
+    </script>
+</body>
+
+</html>

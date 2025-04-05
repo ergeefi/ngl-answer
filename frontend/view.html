@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Lihat Jawaban</title>
+    <link rel="stylesheet" href="styles.css" />
+</head>
+
+<body>
+    <div class="container">
+        <h1>Jawaban Pertanyaan NGL</h1>
+
+        <div class="question-answer-wrapper" id="qaWrapper">
+            <!-- Konten akan dimuat oleh JS -->
+        </div>
+
+        <a href="index.html" class="btn-link">← Kembali ke daftar</a>
+    </div>
+
+    <footer class="site-footer">
+        <p>&copy; 2025 Made by Ergeefi.</p>
+    </footer>
+
+    <script>
+        const params = new URLSearchParams(window.location.search);
+        const id = params.get("id");
+        const qaWrapper = document.getElementById("qaWrapper");
+
+        if (!id) {
+            qaWrapper.innerHTML = "<p>ID tidak ditemukan di URL.</p>";
+        } else {
+            fetch(`http://localhost:3000/answers`)
+                .then(res => res.json())
+                .then(data => {
+                    const item = data.find(entry => entry.id === id);
+                    if (item) {
+                        qaWrapper.innerHTML = `
+  <div class="question-view">
+    <img src="http://localhost:3000${item.image}" alt="Pertanyaan NGL" />
+  </div>
+
+  <div class="answer-box">
+    <h2>Jawaban:</h2>
+    <p class="answer">${item.answer}</p>
+  </div>
+`;
+                    } else {
+                        qaWrapper.innerHTML = "<p>Pertanyaan tidak ditemukan.</p>";
+                    }
+                })
+                .catch(err => {
+                    console.error("Gagal mengambil data:", err);
+                    qaWrapper.innerHTML = "<p>Gagal memuat data.</p>";
+                });
+        }
+    </script>
+</body>
+
+</html>

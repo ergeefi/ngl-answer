@@ -1,0 +1,354 @@
+@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap");
+
+:root {
+  --bg-color: #000000;
+  --card-bg: #1a1a1a;
+  --text-color: #e0e0e0;
+  --accent-color: #ffffffcc;
+  --border-color: #262626;
+  --overlay-bg: rgba(0, 0, 0, 0.5);
+  --hover-bg: #2a2a2a;
+
+  --padding-sm: 12px;
+  --padding-md: 16px;
+  --padding-lg: 24px;
+  --padding-uniform: 16px;
+  --radius: 12px;
+}
+
+body {
+  font-family: "Poppins", "Segoe UI", "Roboto", sans-serif;
+  margin: 0;
+  padding: 0;
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  line-height: 1.5;
+  font-size: clamp(14px, 2.5vw, 16px);
+}
+
+.container {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: var(--padding-lg);
+}
+
+h1 {
+  text-align: center;
+  color: var(--text-color);
+  font-weight: 600;
+  font-size: clamp(1.5rem, 3vw, 2rem);
+  margin-bottom: var(--padding-lg);
+}
+
+.form-card,
+.question-card,
+.question-view,
+.answer-box {
+  background-color: var(--card-bg);
+  padding: var(--padding-uniform);
+  border-radius: 6px;
+  border: 1px solid var(--border-color);
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.03);
+  width: 100%;
+  box-sizing: border-box;
+  word-break: break-word;
+}
+
+input[type="file"],
+textarea,
+button {
+  width: 100%;
+  margin-top: var(--padding-sm);
+  padding: var(--padding-md);
+  font-size: 1em;
+  background-color: var(--card-bg);
+  border: 1px solid var(--border-color);
+  color: var(--text-color);
+  border-radius: 6px;
+  box-sizing: border-box;
+}
+
+textarea {
+  resize: vertical;
+  min-height: 100px;
+}
+
+button {
+  background-color: var(--text-color);
+  color: #000;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+  border: none;
+}
+
+button:hover {
+  background-color: #fafafa;
+  transform: scale(1);
+}
+
+.btn-link {
+  display: inline-block;
+  padding: var(--padding-sm) var(--padding-md);
+  background-color: var(--text-color);
+  color: #000;
+  border-radius: var(--radius);
+  font-weight: 600;
+  text-decoration: none;
+  transition: background-color 0.3s ease;
+  margin-top: var(--padding-lg);
+}
+
+.btn-link:hover {
+  background-color: #ffffff;
+  color: #000;
+}
+
+.question-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: var(--padding-md);
+  padding: 0;
+  list-style: none;
+  max-width: 960px;
+  margin: 0 0;
+}
+
+.question-list li {
+  display: block;
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--radius);
+  border: 1px solid var(--border-color);
+  background-color: var(--card-bg);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+  transition: transform 0.3s ease;
+  min-height: 300px;
+  padding: var(
+    --padding-uniform
+  );
+}
+
+.question-list li:hover {
+  transform: scale(1.05);
+}
+
+.question-list a {
+  color: var(--text-color);
+  text-decoration: none;
+  display: block;
+  position: relative;
+}
+
+.question-list img {
+  width: 100%;
+  max-height: 100%;
+  border-radius: 6px;
+  display: block;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.question-list li:hover img {
+  transform: scale(1);
+}
+
+.question-list .overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: var(--overlay-bg);
+  opacity: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: opacity 0.3s ease;
+  border-radius: 6px;
+  transform: scale(1);
+}
+
+.question-list li:hover .overlay {
+  opacity: 1;
+}
+
+.question-list .overlay button {
+  background-color: rgba(255, 255, 255, 0.9);
+  color: #000;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: transform 0.3s ease, background-color 0.3s ease;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+  max-width: 80%;
+}
+
+.question-list .overlay button:hover {
+  transform: scale(1.05);
+  background-color: #ffffff;
+}
+
+.question-view img {
+  max-width: 100%;
+  max-height: 100%;
+  border-radius: 6px;
+  object-fit: contain;
+}
+
+.answer-box h2 {
+  color: var(--accent-color);
+  font-size: 1.2rem;
+  margin-bottom: var(--padding-md);
+}
+
+.question-answer-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: var(--padding-lg);
+  align-items: stretch;
+  width: 100%;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  background-color: #1e1e1e;
+  border-radius: 6px;
+  margin-bottom: 20px;
+  overflow: hidden; /* Atau 'visible' jika butuh */
+  color: #fff;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+  max-width: 100%; /* Tambahan agar tidak terlalu lebar */
+}
+
+.img-container {
+  position: relative;
+  width: 100%;
+}
+
+.img-container img {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.overlay {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  display: flex;
+  flex-direction: column; /* Tombol jadi vertikal */
+  gap: 8px;
+}
+
+.overlay button {
+  background-color: rgba(0, 0, 0, 0.6);
+  color: #fff;
+  border: none;
+  padding: 5px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  transition: background-color 0.3s ease;
+}
+
+.overlay button:hover {
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
+.answer {
+  box-sizing: border-box;
+  padding: 12px 16px;
+  margin-top: var(--padding-uniform);
+  margin-bottom: 0px;
+  border-radius: var(--radius);
+  font-size: 14px;
+  color: #ddd;
+  background-color: #2b2b2b;
+  border-top: 1px solid #444;
+  white-space: pre-wrap;
+  word-break: break-word;
+  overflow-wrap: break-word;
+}
+
+@media (min-width: 1024px) {
+  .question-list {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+@media (min-width: 768px) {
+  .question-answer-wrapper {
+    flex-direction: row;
+    align-items: flex-start;
+    justify-content: center;
+    gap: var(--padding-lg);
+  }
+
+  .question-view,
+  .answer-box {
+    padding: var(--padding-md);
+    flex: 1;
+    max-width: 50%;
+  }
+}
+
+@media (max-width: 480px) {
+  .container {
+    padding-left: 24px;
+    padding-right: 24px;
+    padding-top: var(--padding-sm);
+    padding-bottom: var(--padding-lg);
+  }
+
+  h1 {
+    font-size: 1.25rem;
+  }
+
+  .question-list li {
+    min-height: 200px;
+    padding: var(--padding-sm);
+    margin-bottom: 14px;
+  }
+
+  .question-list img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+  }
+
+  .question-list .overlay button {
+    font-size: 0.75rem;
+    padding: 6px 12px;
+    border-radius: 6px;
+  }
+
+  .question-view,
+  .answer-box {
+    padding: var(--padding-sm);
+  }
+
+  .btn-link {
+    font-size: 0.9rem;
+    padding: var(--padding-sm) var(--padding-sm);
+  }
+}
+
+/* Footer */
+.site-footer {
+  background-color: var(--card-bg);
+  color: var(--accent-color);
+  text-align: center;
+  padding: var(--padding-lg) var(--padding-md);
+  font-size: 0.875rem;
+  border-top: 1px solid var(--border-color);
+}
+
+.site-footer p {
+  margin: 0;
+  opacity: 0.7;
+}

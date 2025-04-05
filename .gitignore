@@ -1,0 +1,7 @@
+# Node.js (backend)
+backend/node_modules/
+backend/uploads/
+backend/.env
+
+# System
+.DS_Store
