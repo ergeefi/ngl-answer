@@ -1,23 +1,28 @@
+import dotenv from "dotenv";
+dotenv.config();
+
 import express from "express";
 import cors from "cors";
 import multer from "multer";
-import cloudinary from "cloudinary";
 import { Low } from "lowdb";
 import { JSONFile } from "lowdb";
 import path from "path";
 import fs from "fs";
-import dotenv from "dotenv";
+import { fileURLToPath } from "url";
+import cloudinary from "cloudinary";
 
-// Load environment variables
-dotenv.config();
+// Setup __dirname karena kita pakai ES module
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Setup Cloudinary
 cloudinary.config({
   cloud_name: process.env.CLOUD_NAME,
-  api_key: process.env.CLOUD_API_KEY,
-  api_secret: process.env.CLOUD_API_SECRET,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
+// Setup Express dan port
 const app = express();
 const port = process.env.PORT || 3000;
 
@@ -25,10 +30,6 @@ const port = process.env.PORT || 3000;
 const dbFile = path.join(__dirname, "db.json");
 const adapter = new JSONFile(dbFile);
 const db = new Low(adapter);
-
-// Setup Multer (memory storage for Cloudinary)
-const storage = multer.memoryStorage();
-const upload = multer({ storage: storage });
 
 // Baca dan inisialisasi database
 await db.read();
@@ -39,56 +40,59 @@ await db.write();
 app.use(cors());
 app.use(express.json());
 
-// Route untuk mendapatkan data answers
+// Setup multer untuk file upload (file tidak disimpan secara lokal)
+const storage = multer.memoryStorage();  // Gunakan memoryStorage untuk menyimpan file sementara
+const upload = multer({ storage });
+
+// Routes
 app.get("/answers", (req, res) => {
   res.json(db.data.answers);
 });
 
-// Route untuk upload gambar dan menyimpan jawaban
+// Route untuk menambah data answer dengan gambar
 app.post("/answers", upload.single("image"), async (req, res) => {
-  const { answer } = req.body;
-  let imageUrl = null;
+  try {
+    const { answer } = req.body;
 
-  // Cek jika ada file di request
-  if (req.file) {
-    try {
-      // Upload file gambar ke Cloudinary
-      const uploadResponse = await new Promise((resolve, reject) => {
-        cloudinary.uploader.upload_stream(
-          { resource_type: "auto" }, // Menangani berbagai tipe file (image, video, dll)
-          (error, result) => {
-            if (error) {
-              console.error("Error uploading image to Cloudinary:", error);
-              reject("Gagal mengupload gambar!");
-            } else {
-              resolve(result.secure_url);
-            }
+    // Cek apakah ada file gambar yang diupload
+    if (req.file) {
+      // Upload gambar ke Cloudinary
+      const result = await cloudinary.uploader.upload_stream(
+        { resource_type: "auto" }, // secara otomatis mendeteksi tipe file (gambar/video)
+        async (error, result) => {
+          if (error) {
+            return res.status(500).json({ error: "Cloudinary upload failed" });
           }
-        ).end(req.file.buffer); // Mengirim file ke Cloudinary
-      });
 
-      // Dapatkan URL gambar dari Cloudinary
-      imageUrl = uploadResponse;
-    } catch (error) {
-      console.error("Error in Cloudinary upload:", error);
-      return res.status(500).json({ message: "Terjadi kesalahan saat upload gambar." });
+          // Simpan URL gambar dari Cloudinary
+          const imageUrl = result.secure_url;
+
+          // Menambahkan data ke database
+          const newEntry = {
+            id: Date.now().toString(),
+            image: imageUrl,
+            answer,
+          };
+
+          db.data.answers.push(newEntry);
+          await db.write();
+
+          // Kirim respons
+          res.status(201).json(newEntry);
+        }
+      );
+
+      // Mengubah file gambar menjadi stream untuk diupload ke Cloudinary
+      req.file.stream.pipe(result);
+    } else {
+      res.status(400).json({ error: "No file uploaded" });
     }
+  } catch (error) {
+    res.status(500).json({ error: "Failed to upload image to Cloudinary" });
   }
-
-  // Simpan data baru ke database
-  const newEntry = {
-    id: Date.now().toString(),
-    image: imageUrl,
-    answer,
-  };
-
-  db.data.answers.push(newEntry);
-  await db.write();
-
-  res.status(201).json(newEntry);
 });
 
-// Route untuk update jawaban
+// Route untuk mengupdate answer
 app.put("/answers/:id", async (req, res) => {
   const { id } = req.params;
   const { answer } = req.body;
@@ -103,7 +107,7 @@ app.put("/answers/:id", async (req, res) => {
   }
 });
 
-// Route untuk delete jawaban
+// Route untuk menghapus answer
 app.delete("/answers/:id", async (req, res) => {
   const { id } = req.params;
   db.data.answers = db.data.answers.filter((a) => a.id !== id);
@@ -111,9 +115,8 @@ app.delete("/answers/:id", async (req, res) => {
   res.status(204).end();
 });
 
-// Route untuk testing jika server berjalan
 app.get("/", (req, res) => {
-  res.send("Hello there! API is working.");
+  res.send("Hello there! Api is working");
 });
 
 // Start server
