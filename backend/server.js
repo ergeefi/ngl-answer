@@ -9,6 +9,14 @@ import { JSONFile } from "lowdb";
 import path from "path";
 import fs from "fs";
 import { fileURLToPath } from "url";
+import cloudinary from "cloudinary";
+
+// Setup Cloudinary
+cloudinary.config({
+  cloud_name: process.env.CLOUD_NAME,
+  api_key: process.env.CLOUD_API_KEY,
+  api_secret: process.env.CLOUD_API_SECRET,
+});
 
 // Setup __dirname karena kita pakai ES module
 const __filename = fileURLToPath(import.meta.url);
@@ -17,13 +25,6 @@ const __dirname = path.dirname(__filename);
 // Setup Express dan port
 const app = express();
 const port = process.env.PORT || 3000;
-
-
-// Buat folder uploads kalau belum ada
-const uploadsDir = path.join(__dirname, process.env.UPLOAD_DIR || "uploads");
-if (!fs.existsSync(uploadsDir)) {
-  fs.mkdirSync(uploadsDir);
-}
 
 // Setup LowDB
 const dbFile = path.join(__dirname, "db.json");
@@ -38,14 +39,9 @@ await db.write();
 // Middleware
 app.use(cors());
 app.use(express.json());
-app.use("/uploads", express.static(uploadsDir));
 
 // Setup multer
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, uploadsDir),
-  filename: (req, file, cb) =>
-    cb(null, Date.now() + path.extname(file.originalname)),
-});
+const storage = multer.memoryStorage(); // Menyimpan file di memory
 const upload = multer({ storage });
 
 // Routes
@@ -55,7 +51,25 @@ app.get("/answers", (req, res) => {
 
 app.post("/answers", upload.single("image"), async (req, res) => {
   const { answer } = req.body;
-  const imageUrl = req.file ? `/uploads/${req.file.filename}` : null;
+
+  // Upload gambar ke Cloudinary
+  let imageUrl = null;
+  if (req.file) {
+    try {
+      const uploadResponse = await cloudinary.uploader.upload_stream(
+        { resource_type: "auto" }, // auto untuk otomatis menentukan tipe file
+        (error, result) => {
+          if (error) {
+            return res.status(500).json({ error: "Image upload failed." });
+          }
+          imageUrl = result.secure_url;
+        }
+      );
+      uploadResponse.end(req.file.buffer);
+    } catch (error) {
+      return res.status(500).json({ error: "Cloudinary upload failed" });
+    }
+  }
 
   const newEntry = {
     id: Date.now().toString(),
@@ -89,6 +103,10 @@ app.delete("/answers/:id", async (req, res) => {
   await db.write();
   res.status(204).end();
 });
+
+app.get("/", (req, res) => {
+  res.send("Hello there! Api is working")
+})
 
 // Start server
 app.listen(port, () => {

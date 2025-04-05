@@ -31,14 +31,14 @@
         if (!id) {
             qaWrapper.innerHTML = "<p>ID tidak ditemukan di URL.</p>";
         } else {
-            fetch(`http://localhost:3000/answers`)
+            fetch(`https://ngl-answer.up.railway.app/answers`)
                 .then(res => res.json())
                 .then(data => {
                     const item = data.find(entry => entry.id === id);
                     if (item) {
                         qaWrapper.innerHTML = `
   <div class="question-view">
-    <img src="http://localhost:3000${item.image}" alt="Pertanyaan NGL" />
+    <img src="https://ngl-answer.up.railway.app${item.image}" alt="Pertanyaan NGL" />
   </div>
 
   <div class="answer-box">

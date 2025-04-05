@@ -41,7 +41,7 @@
             throw new Error("Akses Ditolak");
         }
 
-        const API = "http://localhost:3000/answers";
+        const API = "https://ngl-answer.up.railway.app/answers";
         const uploadForm = document.getElementById("uploadForm");
         const questionList = document.getElementById("questionList");
 
@@ -63,7 +63,7 @@
 
                 li.innerHTML = `
   <div class="img-container">
-    <img src="http://localhost:3000${item.image}" alt="Pertanyaan" />
+    <img src="https://ngl-answer.up.railway.app${item.image}" alt="Pertanyaan" />
     <div class="overlay">
       <button class="edit-btn">Edit</button>
       <button class="delete-btn">Hapus</button>
