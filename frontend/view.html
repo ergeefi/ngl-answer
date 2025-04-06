@@ -4,13 +4,13 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Lihat Jawaban</title>
+    <title>NGL Ergeefi - Jawaban</title>
     <link rel="stylesheet" href="styles.css" />
 </head>
 
 <body>
     <div class="container">
-        <h1>Jawaban Pertanyaan NGL</h1>
+        <h1>Jawaban Pertanyaan NGL Ergeefi</h1>
 
         <div class="question-answer-wrapper" id="qaWrapper">
             <!-- Konten akan dimuat oleh JS -->
@@ -20,7 +20,7 @@
     </div>
 
     <footer class="site-footer">
-        <p>&copy; 2025 Made by Ergeefi.</p>
+        <p>&copy; 2025 Made by <a href="https://www.instagram.com/ergeefi">Ergeefi</a>.</p>
     </footer>
 
     <script>
@@ -31,14 +31,14 @@
         if (!id) {
             qaWrapper.innerHTML = "<p>ID tidak ditemukan di URL.</p>";
         } else {
-            fetch(`https://ngl-answer.up.railway.app/answers`)
+            fetch(`http://localhost:3000/answers`)
                 .then(res => res.json())
                 .then(data => {
                     const item = data.find(entry => entry.id === id);
                     if (item) {
                         qaWrapper.innerHTML = `
   <div class="question-view">
-    <img src="https://ngl-answer.up.railway.app${item.image}" alt="Pertanyaan NGL" />
+    <img src="${item.image}" alt="Pertanyaan NGL" />
   </div>
 
   <div class="answer-box">

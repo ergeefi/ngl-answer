@@ -1,6 +1,6 @@
 const questionList = document.getElementById("questionList");
 
-fetch("https://ngl-answer.up.railway.app/answers")
+fetch("http://localhost:3000/answers")
   .then(res => res.json())
   .then(data => {
     data.forEach(item => {
@@ -8,7 +8,7 @@ fetch("https://ngl-answer.up.railway.app/answers")
 
       li.innerHTML = `
         <a href="view.html?id=${item.id}">
-          <img src="https://ngl-answer.up.railway.app${item.image}" alt="Pertanyaan" />
+          <img src="${item.image}" alt="Pertanyaan" />
           <div class="overlay">
             <button>Lihat Jawaban</button>
           </div>

@@ -40,18 +40,42 @@ h1 {
   margin-bottom: var(--padding-lg);
 }
 
+h2 {
+  margin: 0px !important;
+}
+
+a {
+  text-decoration: none;
+  color: red;
+  font-weight: 800;
+}
+
 .form-card,
 .question-card,
 .question-view,
-.answer-box {
+.answer-box,
+.login-box {
   background-color: var(--card-bg);
   padding: var(--padding-uniform);
-  border-radius: 6px;
+  border-radius: var(--radius);
   border: 1px solid var(--border-color);
   box-shadow: 0 0 10px rgba(255, 255, 255, 0.03);
   width: 100%;
   box-sizing: border-box;
   word-break: break-word;
+}
+
+input[type="text"],
+input[type="password"] {
+  width: 100%;
+  margin-top: var(--padding-sm);
+  padding: var(--padding-md);
+  font-size: 1em;
+  background-color: var(--card-bg);
+  border: 1px solid var(--border-color);
+  color: var(--text-color);
+  border-radius: 6px;
+  box-sizing: border-box;
 }
 
 input[type="file"],
@@ -92,7 +116,7 @@ button:hover {
   padding: var(--padding-sm) var(--padding-md);
   background-color: var(--text-color);
   color: #000;
-  border-radius: var(--radius);
+  border-radius: 6px;
   font-weight: 600;
   text-decoration: none;
   transition: background-color 0.3s ease;
@@ -124,9 +148,7 @@ button:hover {
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
   transition: transform 0.3s ease;
   min-height: 300px;
-  padding: var(
-    --padding-uniform
-  );
+  padding: var(--padding-uniform);
 }
 
 .question-list li:hover {
@@ -202,7 +224,6 @@ button:hover {
 .answer-box h2 {
   color: var(--accent-color);
   font-size: 1.2rem;
-  margin-bottom: var(--padding-md);
 }
 
 .question-answer-wrapper {
@@ -219,10 +240,10 @@ button:hover {
   background-color: #1e1e1e;
   border-radius: 6px;
   margin-bottom: 20px;
-  overflow: hidden; /* Atau 'visible' jika butuh */
+  overflow: hidden;
   color: #fff;
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
-  max-width: 100%; /* Tambahan agar tidak terlalu lebar */
+  max-width: 100%;
 }
 
 .img-container {
@@ -241,7 +262,7 @@ button:hover {
   top: 10px;
   right: 10px;
   display: flex;
-  flex-direction: column; /* Tombol jadi vertikal */
+  flex-direction: column;
   gap: 8px;
 }
 
@@ -265,7 +286,7 @@ button:hover {
   padding: 12px 16px;
   margin-top: var(--padding-uniform);
   margin-bottom: 0px;
-  border-radius: var(--radius);
+  border-radius: 6px;
   font-size: 14px;
   color: #ddd;
   background-color: #2b2b2b;
@@ -273,6 +294,20 @@ button:hover {
   white-space: pre-wrap;
   word-break: break-word;
   overflow-wrap: break-word;
+}
+
+.site-footer {
+  background-color: var(--card-bg);
+  color: var(--accent-color);
+  text-align: center;
+  padding: var(--padding-lg) var(--padding-md);
+  font-size: 0.875rem;
+  border-top: 1px solid var(--border-color);
+}
+
+.site-footer p {
+  margin: 0;
+  opacity: 0.7;
 }
 
 @media (min-width: 1024px) {
@@ -327,6 +362,8 @@ button:hover {
     border-radius: 6px;
   }
 
+  .form-card,
+  .question-card,
   .question-view,
   .answer-box {
     padding: var(--padding-sm);
@@ -336,19 +373,4 @@ button:hover {
     font-size: 0.9rem;
     padding: var(--padding-sm) var(--padding-sm);
   }
-}
-
-/* Footer */
-.site-footer {
-  background-color: var(--card-bg);
-  color: var(--accent-color);
-  text-align: center;
-  padding: var(--padding-lg) var(--padding-md);
-  font-size: 0.875rem;
-  border-top: 1px solid var(--border-color);
-}
-
-.site-footer p {
-  margin: 0;
-  opacity: 0.7;
 }

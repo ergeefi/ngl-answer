@@ -4,13 +4,25 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Admin Panel</title>
+    <title>NGL Ergeefi - Admin Panel</title>
     <link rel="stylesheet" href="styles.css" />
 </head>
 
 <body>
-    <div class="container">
-        <h1>Ergeefi</h1>
+    <div id="login-screen" class="container">
+        <h1>Admin Panel NGL Ergeefi</h1>
+        <div class="form-card">
+            <h2>Selamat Datang, silakan Masuk!</h2>
+            <form id="loginForm">
+                <input type="password" id="passwordInput" placeholder="Masukkan kata sandi..." required />
+                <p id="loginError" class="error-message"></p>
+                <button type="submit">Masuk</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="admin-panel" class="container" style="display: none;">
+        <h1>Admin Panel NGL Ergeefi</h1>
 
         <!-- Form Upload -->
         <div class="form-card">
@@ -18,137 +30,183 @@
             <form id="uploadForm" enctype="multipart/form-data">
                 <input type="file" name="image" accept="image/*" required />
                 <textarea name="answer" placeholder="Tulis jawaban di sini..." required></textarea>
-                <button type="submit">Upload</button>
+                <button type="submit">Simpan</button>
             </form>
         </div>
 
-        <h1>Daftar Pertanyaan</h1>
+        <a href="index.html"><h1>Daftar Pertanyaan</h1></a>
         <ul class="question-list" id="questionList">
             <!-- Elemen akan diisi oleh JavaScript -->
         </ul>
     </div>
 
-    <footer class="site-footer">
-        <p>&copy; 2025 Made by Ergeefi.</p>
+    <footer class="site-footer" style="display: none;">
+        <p>&copy; 2025 Made by <a href="https://www.instagram.com/ergeefi">Ergeefi</a>.</p>
     </footer>
 
     <script>
-        // Proteksi password
-        const password = prompt("Masukkan password admin:");
-        if (password !== "admin123") {
-            alert("Password salah!");
-            document.body.innerHTML = "<h1 style='text-align:center;margin-top:50px;'>Akses Ditolak</h1>";
-            throw new Error("Akses Ditolak");
+        // Password hash (SHA-256) untuk "admin123"
+        // Hash ini setara dengan "admin123" yang telah di-hash
+        const correctPasswordHash = "240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9";
+
+        // Fungsi untuk menghash string menggunakan SHA-256
+        async function hashString(str) {
+            const encoder = new TextEncoder();
+            const data = encoder.encode(str);
+            const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+            return hashHex;
         }
 
-        const API = "https://ngl-answer.up.railway.app/answers";
-        const uploadForm = document.getElementById("uploadForm");
-        const questionList = document.getElementById("questionList");
-
-        async function loadData() {
-            try {
-                const res = await fetch(API);
-                const data = await res.json();
-                renderList(data);
-            } catch (err) {
-                console.error("Gagal memuat data:", err);
-            }
-        }
-
-        function renderList(data) {
-            questionList.innerHTML = "";
-            data.forEach((item) => {
-                const li = document.createElement("li");
-                li.className = "card";
-
-                li.innerHTML = `
-  <div class="img-container">
-    <img src="https://ngl-answer.up.railway.app${item.image}" alt="Pertanyaan" />
-    <div class="overlay">
-      <button class="edit-btn">Edit</button>
-      <button class="delete-btn">Hapus</button>
-    </div>
-  </div>
-  <div class="answer">${item.answer}</div>
-`;
-
-
-                const editBtn = li.querySelector(".edit-btn");
-                editBtn.addEventListener("click", (e) => {
-                    e.stopPropagation();
-                    e.preventDefault();
-                    editItem(item.id, item.answer);
-                });
-
-                const deleteBtn = li.querySelector(".delete-btn");
-                deleteBtn.addEventListener("click", (e) => {
-                    e.stopPropagation();
-                    e.preventDefault();
-                    deleteItem(item.id);
-                });
-
-                questionList.appendChild(li);
-            });
-        }
-
-
-
-        uploadForm.addEventListener("submit", async (e) => {
+        // Verifikasi password
+        document.getElementById("loginForm").addEventListener("submit", async function (e) {
             e.preventDefault();
-            const formData = new FormData(uploadForm);
+            const password = document.getElementById("passwordInput").value;
+            const passwordHash = await hashString(password);
 
-            try {
-                const res = await fetch(API, {
-                    method: "POST",
-                    body: formData,
-                });
-                if (res.ok) {
-                    uploadForm.reset();
-                    loadData();
-                } else {
-                    alert("Gagal mengupload data!");
-                }
-            } catch (err) {
-                alert("Terjadi kesalahan saat upload!");
+            if (passwordHash === correctPasswordHash) {
+                document.getElementById("login-screen").style.display = "none";
+                document.getElementById("admin-panel").style.display = "block";
+                document.getElementsByClassName("site-footer")[0].style.display = "block";
+                initializeAdminPanel();
+            } else {
+                document.getElementById("loginError").textContent = "Password salah!";
             }
         });
 
-        async function editItem(id, oldAnswer) {
-            const newAnswer = prompt("Edit jawaban:", oldAnswer);
-            if (newAnswer && newAnswer !== oldAnswer) {
-                const res = await fetch(`${API}/${id}`, {
-                    method: "PUT",
-                    headers: {
-                        "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify({
-                        answer: newAnswer
-                    }),
-                });
+        // Inisialisasi panel admin setelah login sukses
+        function initializeAdminPanel() {
+            const API = "http://localhost:3000/answers";
+            const uploadForm = document.getElementById("uploadForm");
+            const questionList = document.getElementById("questionList");
 
-                if (res.ok) {
-                    loadData();
-                } else {
-                    alert("Gagal mengedit!");
+            async function loadData() {
+                try {
+                    console.log("Memuat data dari API...");
+                    const res = await fetch(API);
+                    const data = await res.json();
+                    console.log("Data diterima:", data);
+                    renderList(data);
+                } catch (err) {
+                    console.error("Gagal memuat data:", err);
                 }
             }
-        }
 
-        async function deleteItem(id) {
-            if (confirm("Yakin ingin menghapus item ini?")) {
-                const res = await fetch(`${API}/${id}`, {
-                    method: "DELETE",
+            function renderList(data) {
+                questionList.innerHTML = "";
+                data.forEach((item) => {
+                    const li = document.createElement("li");
+                    li.className = "card";
+
+                    li.innerHTML = `
+          <div class="img-container">
+            <img src="${item.image}" alt="Pertanyaan" />
+            <div class="overlay">
+              <button class="edit-btn">Edit</button>
+              <button class="delete-btn">Hapus</button>
+            </div>
+          </div>
+          <div class="answer">${item.answer}</div>
+    `;
+
+                    const editBtn = li.querySelector(".edit-btn");
+                    editBtn.addEventListener("click", (e) => {
+                        e.stopPropagation();
+                        e.preventDefault();
+                        editItem(item.id, item.answer);
+                    });
+
+                    const deleteBtn = li.querySelector(".delete-btn");
+                    deleteBtn.addEventListener("click", (e) => {
+                        e.stopPropagation();
+                        e.preventDefault();
+                        deleteItem(item.id);
+                    });
+
+                    questionList.appendChild(li);
                 });
-                if (res.ok) {
-                    loadData();
-                } else {
-                    alert("Gagal menghapus!");
+            }
+
+            uploadForm.addEventListener("submit", async (e) => {
+                e.preventDefault();
+                const formData = new FormData(uploadForm);
+                console.log("Mengirim form data ke server...");
+
+                try {
+                    const res = await fetch(API, {
+                        method: "POST",
+                        body: formData,
+                    });
+
+                    console.log("Respons dari server:", res);
+                    if (res.ok) {
+                        console.log("Data berhasil diupload!");
+                        uploadForm.reset();
+                        loadData();
+                    } else {
+                        alert("Gagal mengupload data!");
+                        console.error("Error saat upload:", await res.text());
+                    }
+                } catch (err) {
+                    alert("Terjadi kesalahan saat upload!");
+                    console.error("Kesalahan saat mengirim data:", err);
+                }
+            });
+
+            async function editItem(id, oldAnswer) {
+                const newAnswer = prompt("Edit jawaban:", oldAnswer);
+                if (newAnswer && newAnswer !== oldAnswer) {
+                    console.log(`Mengedit jawaban untuk ID ${id}...`);
+                    const res = await fetch(`${API}/${id}`, {
+                        method: "PUT",
+                        headers: {
+                            "Content-Type": "application/json",
+                        },
+                        body: JSON.stringify({
+                            answer: newAnswer
+                        }),
+                    });
+
+                    console.log("Respons dari server:", res);
+                    if (res.ok) {
+                        console.log("Jawaban berhasil diupdate!");
+                        loadData();
+                    } else {
+                        alert("Gagal mengedit!");
+                        console.error("Error saat edit:", await res.text());
+                    }
                 }
             }
-        }
 
-        loadData();
+            async function deleteItem(id) {
+                if (confirm("Yakin ingin menghapus item ini?")) {
+                    console.log(`Menghapus item dengan ID ${id}...`);
+                    const res = await fetch(`${API}/${id}`, {
+                        method: "DELETE",
+                    });
+                    console.log("Respons dari server:", res);
+                    if (res.ok) {
+                        console.log("Item berhasil dihapus!");
+                        loadData();
+                    } else {
+                        alert("Gagal menghapus!");
+                        console.error("Error saat hapus:", await res.text());
+                    }
+                }
+            }
+
+            loadData();
+        }
     </script>
+
+    <style>
+        .error-message {
+            color: #e74c3c;
+            text-align: center;
+            margin-bottom: 0 !important;
+        }
+    </style>
 </body>
 
 </html>

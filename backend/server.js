@@ -7,13 +7,10 @@ import multer from "multer";
 import { Low } from "lowdb";
 import { JSONFile } from "lowdb";
 import path from "path";
-import fs from "fs";
+import { v2 as cloudinary } from "cloudinary";
+import { CloudinaryStorage } from "multer-storage-cloudinary";
 import { fileURLToPath } from "url";
-import cloudinary from "cloudinary";
-
-// Setup __dirname karena kita pakai ES module
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+import { dirname } from "path";
 
 // Setup Cloudinary
 cloudinary.config({
@@ -22,11 +19,12 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-// Setup Express dan port
 const app = express();
 const port = process.env.PORT || 3000;
 
 // Setup LowDB
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 const dbFile = path.join(__dirname, "db.json");
 const adapter = new JSONFile(dbFile);
 const db = new Low(adapter);
@@ -40,55 +38,69 @@ await db.write();
 app.use(cors());
 app.use(express.json());
 
-// Setup multer untuk file upload (file tidak disimpan secara lokal)
-const storage = multer.memoryStorage();  // Gunakan memoryStorage untuk menyimpan file sementara
-const upload = multer({ storage });
+// Setup multer dengan Cloudinary storage
+const storage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: {
+    folder: "ergeefi",
+    format: async (req, file) => {
+      // Deteksi format dari mime type
+      if (file.mimetype === "image/jpeg") return "jpg";
+      if (file.mimetype === "image/png") return "png";
+      return "auto"; // Auto-detect untuk format lainnya
+    },
+    public_id: (req, file) => `question_${Date.now()}`
+  },
+});
+
+const upload = multer({ storage: storage });
+
+// Buat folder uploads jika belum ada
+app.use("/uploads", express.static(path.join(__dirname, process.env.UPLOAD_DIR || "uploads")));
 
 // Routes
 app.get("/answers", (req, res) => {
+  console.log("Fetching answers from DB...");
   res.json(db.data.answers);
 });
 
 // Route untuk menambah data answer dengan gambar
 app.post("/answers", upload.single("image"), async (req, res) => {
   try {
+    console.log("Received upload request...");
+    
     const { answer } = req.body;
-
-    // Cek apakah ada file gambar yang diupload
-    if (req.file) {
-      // Upload gambar ke Cloudinary
-      const result = await cloudinary.uploader.upload_stream(
-        { resource_type: "auto" }, // secara otomatis mendeteksi tipe file (gambar/video)
-        async (error, result) => {
-          if (error) {
-            return res.status(500).json({ error: "Cloudinary upload failed" });
-          }
-
-          // Simpan URL gambar dari Cloudinary
-          const imageUrl = result.secure_url;
-
-          // Menambahkan data ke database
-          const newEntry = {
-            id: Date.now().toString(),
-            image: imageUrl,
-            answer,
-          };
-
-          db.data.answers.push(newEntry);
-          await db.write();
-
-          // Kirim respons
-          res.status(201).json(newEntry);
-        }
-      );
-
-      // Mengubah file gambar menjadi stream untuk diupload ke Cloudinary
-      req.file.stream.pipe(result);
-    } else {
-      res.status(400).json({ error: "No file uploaded" });
+    if (!req.file) {
+      console.error("No file uploaded");
+      return res.status(400).json({ error: "No file uploaded" });
     }
+
+    // Log file info
+    console.log("File uploaded to Cloudinary: ", req.file);
+
+    // Ambil URL gambar dari hasil upload Cloudinary oleh multer-storage-cloudinary
+    const imageUrl = req.file.path;
+    
+    // Buat entry baru
+    const newEntry = { 
+      id: Date.now().toString(), 
+      image: imageUrl, 
+      answer 
+    };
+
+    // Log new entry
+    console.log("New entry to be saved:", newEntry);
+
+    // Simpan ke database
+    db.data.answers.push(newEntry);
+    await db.write();
+
+    console.log("Entry saved to DB successfully");
+
+    res.status(201).json(newEntry);
   } catch (error) {
-    res.status(500).json({ error: "Failed to upload image to Cloudinary" });
+    console.error("General error:", error);
+    res.status(500).json({ error: "Failed to upload image", details: error.message });
   }
 });
 
@@ -110,6 +122,27 @@ app.put("/answers/:id", async (req, res) => {
 // Route untuk menghapus answer
 app.delete("/answers/:id", async (req, res) => {
   const { id } = req.params;
+  
+  // Ambil item yang akan dihapus
+  const item = db.data.answers.find((a) => a.id === id);
+  
+  if (item) {
+    try {
+      // Ekstrak public_id dari URL Cloudinary
+      const publicIdMatch = item.image.match(/\/ergeefi\/([^/]+)(\.\w+)?$/);
+      if (publicIdMatch && publicIdMatch[1]) {
+        const publicId = `ergeefi/${publicIdMatch[1]}`;
+        // Hapus gambar dari Cloudinary
+        await cloudinary.uploader.destroy(publicId);
+        console.log(`Deleted image ${publicId} from Cloudinary`);
+      }
+    } catch (err) {
+      console.error("Error saat menghapus gambar dari Cloudinary:", err);
+      // Lanjutkan proses meskipun gagal menghapus dari Cloudinary
+    }
+  }
+  
+  // Hapus dari database
   db.data.answers = db.data.answers.filter((a) => a.id !== id);
   await db.write();
   res.status(204).end();
