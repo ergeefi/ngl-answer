@@ -1,6 +1,6 @@
 const questionList = document.getElementById("questionList");
 
-fetch("http://localhost:3000/answers")
+fetch("https://ngl-answer.up.railway.app/answers")
   .then(res => res.json())
   .then(data => {
     data.forEach(item => {
