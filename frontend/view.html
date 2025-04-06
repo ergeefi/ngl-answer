@@ -31,7 +31,7 @@
         if (!id) {
             qaWrapper.innerHTML = "<p>ID tidak ditemukan di URL.</p>";
         } else {
-            fetch(`https://ngl-answer.up.railway.app/answers`)
+            fetch(`https://ngl-answer-be.up.railway.app/answers`)
                 .then(res => res.json())
                 .then(data => {
                     const item = data.find(entry => entry.id === id);

@@ -154,5 +154,5 @@ app.get("/", (req, res) => {
 
 // Start server
 app.listen(port, () => {
-  console.log(`✅ Server running at https://ngl-answer.up.railway.app`);
+  console.log(`✅ Server running at https://ngl-answer-be.up.railway.app`);
 });

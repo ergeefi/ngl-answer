@@ -1,6 +1,6 @@
 const questionList = document.getElementById("questionList");
 
-fetch("https://ngl-answer.up.railway.app/answers")
+fetch("https://ngl-answer-be.up.railway.app/answers")
   .then(res => res.json())
   .then(data => {
     data.forEach(item => {
