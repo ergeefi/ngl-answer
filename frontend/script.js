@@ -10,7 +10,7 @@ fetch("https://ngl-answer-be.up.railway.app/answers")
         <a href="view.html?id=${item.id}">
           <img src="${item.image}" alt="Pertanyaan" />
           <div class="overlay">
-            <button>Lihat Jawaban</button>
+            <button>Lihat Balasan</button>
           </div>
         </a>
       `;
